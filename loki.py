@@ -100,12 +100,12 @@ def make_send_data(socket, nxs):
     """Make and send the data packets, assuming all the data are visible
     from nxs[/entry/data/data_*]."""
 
-    # to do part4 properly will involve pulling information out from the
-    # meta file
-
     t0 = time.time()
     dt = 0
     FRAME = 0
+
+    wait = "NO_LOKI_WAIT" not in os.environ
+
     for depth, (ny, nx), size, chunk in chunk_generator(nxs):
 
         start, stop, real, md5 = (
@@ -131,7 +131,8 @@ def make_send_data(socket, nxs):
         part4 = (
             '{"htype":"dconfig-1.0","real_time":%f,"start_time":%f,"stop_time":%f (real, start, stop)}'
         ).encode()
-        wait_until(t)
+        if wait:
+            wait_until(t)
         socket.send_multipart((part1, part2, part3, part4))
         FRAME += 1
 
