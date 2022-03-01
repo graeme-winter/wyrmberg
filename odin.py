@@ -12,7 +12,7 @@ COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
 
 blocks = {}
 datasets = {}
-
+meta = None
 
 def save_chunk(series, frame, messages):
     """Save a chunk into one of the HDF5 files"""
@@ -44,11 +44,29 @@ def save_chunk(series, frame, messages):
 
 
 def process_headers(series, headers):
-    """Process headers from 0mq stream: simplon API 1.8"""
+    """Process headers from 0mq stream: simplon API 1.8, pushes content 
+    of this and the image metadata HDF5"""
 
-    for j, h in enumerate(headers):
-        with open(f"{series}{os.sep}headers.{j}", "wb") as f:
-            f.write(h)
+    global meta
+
+    assert meta is None
+
+    meta = h5py.File(f"{series}_meta.h5", "w")
+
+    meta["series"] = meta.create_dataset("series", data=series)
+
+    # unpack header data into meta.h5 - the first part does not contain
+    # anything which is useful - N.B. no copy operations per se yet...
+
+    config = headers[1].decode()
+    flatfield_xy = tuple(json.loads(headers[2].decode())["shape"])
+    flatfield = numpy.frombuffer(headers[3], dtype=numpy.float32).reshape(flatfield_xy[1], flatfield_xy[0])
+    mask_xy = tuple(json.loads(headers[4].decode())["shape"])
+    mask = numpy.frombuffer(headers[5], dtype=numpy.uint32).reshape(mask_xy[1], mask_xy[0])
+    countrate_xy = tuple(json.loads(headers[6])["shape"])
+    countrate = numpy.frombuffer(headers[7], dtype=numpy.float32).reshape(countrate_xy[1], countrate_xy[0])
+
+
 
 
 def process_image(series, image, frame):
