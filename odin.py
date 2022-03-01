@@ -65,6 +65,7 @@ def process_headers(series, headers):
 
     # unpack header data into meta.h5 - the first part does not contain
     # anything which is useful - N.B. no copy operations per se yet...
+    # switching the sizes around is very annoying
 
     flatfield_xy = tuple(json.loads(headers[2].decode())["shape"])
     mask_xy = tuple(json.loads(headers[4].decode())["shape"])
@@ -80,13 +81,13 @@ def process_headers(series, headers):
     meta.create_dataset(
         "mask",
         data=numpy.frombuffer(headers[3], dtype=numpy.uint32).reshape(
-            mask_xy[1], flatfield_xy[0]
+            mask_xy[1], mask_xy[0]
         ),
     )
     meta.create_dataset(
         "countrate",
         data=numpy.frombuffer(headers[7], dtype=numpy.float32).reshape(
-            countrate_xy[1], countrate_xy[0]
+            countrate_xy[0], countrate_xy[1]
         ),
     )
 
