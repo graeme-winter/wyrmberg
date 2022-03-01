@@ -14,6 +14,7 @@ blocks = {}
 datasets = {}
 meta = None
 
+
 def save_chunk(series, frame, messages):
     """Save a chunk into one of the HDF5 files"""
     block = frame // FRAMES_PER_BLOCK
@@ -44,7 +45,7 @@ def save_chunk(series, frame, messages):
 
 
 def process_headers(series, headers):
-    """Process headers from 0mq stream: simplon API 1.8, pushes content 
+    """Process headers from 0mq stream: simplon API 1.8, pushes content
     of this and the image metadata HDF5"""
 
     global meta
@@ -53,20 +54,41 @@ def process_headers(series, headers):
 
     meta = h5py.File(f"{series}_meta.h5", "w")
 
-    meta["series"] = meta.create_dataset("series", data=series)
+    meta.create_dataset("series", data=series)
+
+    _dectris = meta.create_group("_dectris")
+
+    # yes this is super evil...
+    config = eval(headers[1].decode())
+    for k in sorted(config):
+        _dectris.create_dataset(k, data=config[k])
 
     # unpack header data into meta.h5 - the first part does not contain
     # anything which is useful - N.B. no copy operations per se yet...
 
-    config = headers[1].decode()
     flatfield_xy = tuple(json.loads(headers[2].decode())["shape"])
-    flatfield = numpy.frombuffer(headers[3], dtype=numpy.float32).reshape(flatfield_xy[1], flatfield_xy[0])
     mask_xy = tuple(json.loads(headers[4].decode())["shape"])
-    mask = numpy.frombuffer(headers[5], dtype=numpy.uint32).reshape(mask_xy[1], mask_xy[0])
     countrate_xy = tuple(json.loads(headers[6])["shape"])
-    countrate = numpy.frombuffer(headers[7], dtype=numpy.float32).reshape(countrate_xy[1], countrate_xy[0])
 
-
+    meta.create_dataset("config", data=headers[1].decode())
+    meta.create_dataset(
+        "flatfield",
+        data=numpy.frombuffer(headers[3], dtype=numpy.float32).reshape(
+            flatfield_xy[1], flatfield_xy[0]
+        ),
+    )
+    meta.create_dataset(
+        "mask",
+        data=numpy.frombuffer(headers[3], dtype=numpy.uint32).reshape(
+            mask_xy[1], flatfield_xy[0]
+        ),
+    )
+    meta.create_dataset(
+        "countrate",
+        data=numpy.frombuffer(headers[7], dtype=numpy.float32).reshape(
+            countrate_xy[1], countrate_xy[0]
+        ),
+    )
 
 
 def process_image(series, image, frame):
@@ -97,7 +119,6 @@ def main():
 
         if htype.startswith("dheader"):
             t0 = time.time()
-            os.mkdir(f"{series}")
             process_headers(series, messages)
         elif htype.startswith("dimage"):
             process_image(series, messages, m0["frame"])
