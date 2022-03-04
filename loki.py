@@ -129,7 +129,8 @@ def make_send_data(socket, nxs):
         ).encode()
         part3 = chunk
         part4 = (
-            '{"htype":"dconfig-1.0","real_time":%d,"start_time":%d,"stop_time":%d}' % (real, start, stop)
+            '{"htype":"dconfig-1.0","real_time":%d,"start_time":%d,"stop_time":%d}'
+            % (real, start, stop)
         ).encode()
         if wait:
             wait_until(t)
