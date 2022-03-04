@@ -36,8 +36,23 @@ def save_chunk(series, frame, messages):
     """Save a chunk into one of the HDF5 files"""
     block = frame // FRAMES_PER_BLOCK
 
+    # push the chunk metadata to the right places (at least, stash)
+
+    part1 = json.loads(messages[0].decode())
+    part2 = json.loads(messages[1].decode())
+    part4 = json.loads(messages[3].decode())
+
+    meta_info["hash"][frame] = part1["hash"]
+    meta_info["encoding"][frame] = part2["encoding"]
+    meta_info["size"][frame] = part2["size"]
+    meta_info["datatype"][frame] = part2["type"]
+    meta_info["real_time"][frame] = part4["real_time"]
+    meta_info["start_time"][frame] = part4["start_time"]
+    meta_info["stop_time"][frame] = part4["stop_time"]
+
+    # now save the actual data...
+
     if not block in blocks:
-        part2 = json.loads(messages[1].decode())
 
         dtype = getattr(numpy, part2["type"])
         NY, NX = tuple(part2["shape"])
@@ -53,6 +68,9 @@ def save_chunk(series, frame, messages):
 
     chunk = messages[2]
 
+    # FIXME add a debug mode where we have an assertion here that
+    # this chunk size is the same as the packet chunk size claims
+
     offset = (frame % FRAMES_PER_BLOCK, 0, 0)
 
     datasets[block].id.write_direct_chunk(offset, chunk, 0)
@@ -64,10 +82,22 @@ def process_headers(series, headers):
 
     global meta, meta_info
 
-    assert meta is None
-    assert meta_info is { }
+    assert not meta
+    assert not meta_info
 
-    for k in ['datatype', 'encoding', 'frame', 'frame_series', 'frame_written', 'hash', 'offset_written', 'real_time', 'size', 'start_time', 'stop_time']:
+    for k in [
+        "datatype",
+        "encoding",
+        "frame",
+        "frame_series",
+        "frame_written",
+        "hash",
+        "offset_written",
+        "real_time",
+        "size",
+        "start_time",
+        "stop_time",
+    ]:
         meta_info[k] = {}
 
     meta = h5py.File(f"{series}_meta.h5", "w")
@@ -149,6 +179,33 @@ def main():
                 blocks[block].close()
                 del blocks[block]
                 del datasets[block]
+
+            # flush the metadata tables
+
+            for k in [
+                "datatype",
+                "encoding",
+                "frame",
+                "frame_series",
+                "frame_written",
+                "hash",
+                "offset_written",
+                "real_time",
+                "size",
+                "start_time",
+                "stop_time",
+            ]:
+                table = meta_info[k]
+                str_types = ["datatype", "encoding", "hash"]
+                if k in str_types:
+                    values = numpy.array(
+                        [table[image].encode("utf8") for image in sorted(table)]
+                    )
+                else:
+                    values = numpy.array([table[image] for image in sorted(table)])
+                meta.create_dataset(k, data=values)
+
+            meta.close()
 
 
 main()
