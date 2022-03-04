@@ -217,5 +217,7 @@ def main():
 
             meta.close()
 
+            break
+
 
 main()
