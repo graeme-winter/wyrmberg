@@ -10,17 +10,31 @@ import hdf5plugin
 FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
 
+
 blocks = {}
 datasets = {}
 meta = None
+
+# Per-frame information recorded from stream
+#
+# datatype - e.g. uint16
+# encoding - e.g. the encoding string from image packet
+# frame - 0...NN
+# frame_series - random number
+# frame_written - 0...NN
+# hash - has of frame chunk (N.B. this is wrong)
+# offset_written - 0...NN (seems to be there a lot)
+# real_time - exposure time, from image packet
+# size - size written
+# start_time - times from image packet
+# stop_time - likewise
+
+meta_info = {}
 
 
 def save_chunk(series, frame, messages):
     """Save a chunk into one of the HDF5 files"""
     block = frame // FRAMES_PER_BLOCK
-
-    # FIXME define the proper shape, data type, etc. -> will need more
-    # metadata right here;
 
     if not block in blocks:
         part2 = json.loads(messages[1].decode())
@@ -48,9 +62,13 @@ def process_headers(series, headers):
     """Process headers from 0mq stream: simplon API 1.8, pushes content
     of this and the image metadata HDF5"""
 
-    global meta
+    global meta, meta_info
 
     assert meta is None
+    assert meta_info is { }
+
+    for k in ['datatype', 'encoding', 'frame', 'frame_series', 'frame_written', 'hash', 'offset_written', 'real_time', 'size', 'start_time', 'stop_time']:
+        meta_info[k] = {}
 
     meta = h5py.File(f"{series}_meta.h5", "w")
 
