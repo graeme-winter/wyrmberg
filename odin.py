@@ -82,6 +82,9 @@ def save_chunk(series, frame, messages):
 
     datasets[block].id.write_direct_chunk(offset, chunk, 0)
 
+    # should probably have a check in here too that we can flush and close the file
+    # once all the images have been written
+
 
 def process_headers(series, headers):
     """Process headers from 0mq stream: simplon API 1.8, pushes content
@@ -117,6 +120,9 @@ def process_headers(series, headers):
     config = eval(headers[1].decode().replace("true", "True").replace("false", "False"))
     for k in sorted(config):
         _dectris.create_dataset(k, data=config[k])
+
+    # while we are here, check the number of images we are expecting and push
+    # somewhere so we can add a progress bar
 
     # unpack header data into meta.h5 - the first part does not contain
     # anything which is useful - N.B. no copy operations per se yet...
@@ -190,7 +196,8 @@ def main():
                 del blocks[block]
                 del datasets[block]
 
-            # flush the metadata tables
+            # flush the metadata tables - there are probably more efficient ways
+            # of doing this...
 
             for k in [
                 "datatype",
