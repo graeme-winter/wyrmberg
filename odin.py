@@ -10,6 +10,7 @@ import hdf5plugin
 FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
 
+PREFIX = None
 
 blocks = {}
 datasets = {}
@@ -50,6 +51,12 @@ def save_chunk(series, frame, messages):
     meta_info["start_time"][frame] = part4["start_time"]
     meta_info["stop_time"][frame] = part4["stop_time"]
 
+    for name in "frame", "frame_written", "offset_written":
+        meta_info[name][frame] = frame
+
+    # no idea what this is for
+    meta_info["frame_series"][frame] = 0
+
     # now save the actual data...
 
     if not block in blocks:
@@ -57,7 +64,7 @@ def save_chunk(series, frame, messages):
         dtype = getattr(numpy, part2["type"])
         NY, NX = tuple(part2["shape"])
 
-        blocks[block] = h5py.File(f"{series}_{block+1:06d}.h5", "w")
+        blocks[block] = h5py.File(f"{PREFIX}_{block+1:06d}.h5", "w")
         datasets[block] = blocks[block].create_dataset(
             "data",
             shape=(FRAMES_PER_BLOCK, NY, NX),
@@ -100,7 +107,7 @@ def process_headers(series, headers):
     ]:
         meta_info[k] = {}
 
-    meta = h5py.File(f"{series}_meta.h5", "w")
+    meta = h5py.File(f"{PREFIX}_meta.h5", "w")
 
     meta.create_dataset("series", data=series)
 
@@ -148,13 +155,16 @@ def process_image(series, image, frame):
 def main():
     context = zmq.Context()
 
-    if len(sys.argv) != 2:
-        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999")
+    if len(sys.argv) != 3:
+        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999 /path/to/prefix")
 
     print(f"Connecting to data source: {sys.argv[1]}")
 
     socket = context.socket(zmq.PULL)
     socket.connect(sys.argv[1])
+
+    global PREFIX
+    PREFIX = sys.argv[2]
 
     frames = 0
 
