@@ -13,7 +13,7 @@ Usage
 Computer 2: the "sink" 
 
 ```
-dials.python ~/git/wyrmberg/odin.py tcp://10.144.152.21:9999
+dials.python ~/git/wyrmberg/odin.py tcp://10.144.152.21:9999 /path/to/prefix
 ```
 
 or 
