@@ -114,7 +114,7 @@ def process_headers(series, headers):
     _dectris = meta.create_group("_dectris")
 
     # yes this is super evil...
-    config = eval(headers[1].decode())
+    config = eval(headers[1].decode().replace("true", "True").replace("false", "False"))
     for k in sorted(config):
         _dectris.create_dataset(k, data=config[k])
 
