@@ -7,12 +7,13 @@ import h5py
 import numpy
 import hdf5plugin
 
-FRAMES_PER_BLOCK = 1000
+MAX_FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
 
 PREFIX = None
 
 blocks = {}
+frames_per_block = {}
 datasets = {}
 meta = None
 
@@ -35,7 +36,7 @@ meta_info = {}
 
 def save_chunk(series, frame, messages):
     """Save a chunk into one of the HDF5 files"""
-    block = frame // FRAMES_PER_BLOCK
+    block = frame // MAX_FRAMES_PER_BLOCK
 
     # push the chunk metadata to the right places (at least, stash)
 
@@ -67,23 +68,33 @@ def save_chunk(series, frame, messages):
         blocks[block] = h5py.File(f"{PREFIX}_{block+1:06d}.h5", "w")
         datasets[block] = blocks[block].create_dataset(
             "data",
-            shape=(FRAMES_PER_BLOCK, NY, NX),
+            shape=(MAX_FRAMES_PER_BLOCK, NY, NX),
             chunks=(1, NY, NX),
             dtype=dtype,
             **COMPRESSION,
         )
+
+        frames_per_block[block] = 0
 
     chunk = messages[2]
 
     # FIXME add a debug mode where we have an assertion here that
     # this chunk size is the same as the packet chunk size claims
 
-    offset = (frame % FRAMES_PER_BLOCK, 0, 0)
+    offset = (frame % MAX_FRAMES_PER_BLOCK, 0, 0)
 
     datasets[block].id.write_direct_chunk(offset, chunk, 0)
 
     # should probably have a check in here too that we can flush and close the file
     # once all the images have been written
+
+    frames_per_block[block] += 1
+
+    if frames_per_block[block] == MAX_FRAMES_PER_BLOCK:
+        blocks[block].close()
+        del blocks[block]
+        del datasets[block]
+
 
 
 def process_headers(series, headers):
