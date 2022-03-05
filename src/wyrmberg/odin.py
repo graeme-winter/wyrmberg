@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import json
-import zmq
-import time
 import sys
-import os
+import time
+from typing import Dict, Union
+
 import h5py
 import numpy
-import hdf5plugin
+import zmq
 
 MAX_FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
@@ -17,21 +19,7 @@ frames_per_block = {}
 datasets = {}
 meta = None
 
-# Per-frame information recorded from stream
-#
-# datatype - e.g. uint16
-# encoding - e.g. the encoding string from image packet
-# frame - 0...NN
-# frame_series - random number
-# frame_written - 0...NN
-# hash - has of frame chunk (N.B. this is wrong)
-# offset_written - 0...NN (seems to be there a lot)
-# real_time - exposure time, from image packet
-# size - size written
-# start_time - times from image packet
-# stop_time - likewise
-
-meta_info = {}
+meta_info = {}  # type: Dict[str, Dict[int, Union[float,int,str]]]
 
 
 def save_chunk(series, frame, messages):
@@ -60,7 +48,7 @@ def save_chunk(series, frame, messages):
 
     # now save the actual data...
 
-    if not block in blocks:
+    if block not in blocks:
 
         dtype = getattr(numpy, part2["type"])
         NY, NX = tuple(part2["shape"])
