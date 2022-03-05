@@ -65,7 +65,7 @@ def save_chunk(series, frame, messages):
         dtype = getattr(numpy, part2["type"])
         NY, NX = tuple(part2["shape"])
 
-        blocks[block] = h5py.File(f"{PREFIX}_{block+1:06d}.h5", "w")
+        blocks[block] = h5py.File(f"{PREFIX}_{block+1:06d}.h5", "w", libver="latest")
         datasets[block] = blocks[block].create_dataset(
             "data",
             shape=(MAX_FRAMES_PER_BLOCK, NY, NX),
@@ -73,7 +73,7 @@ def save_chunk(series, frame, messages):
             dtype=dtype,
             **COMPRESSION,
         )
-
+        blocks[block].swmr_mode = True
         frames_per_block[block] = 0
 
     chunk = messages[2]
@@ -84,6 +84,7 @@ def save_chunk(series, frame, messages):
     offset = (frame % MAX_FRAMES_PER_BLOCK, 0, 0)
 
     datasets[block].id.write_direct_chunk(offset, chunk, 0)
+    blocks[block].flush()
 
     # should probably have a check in here too that we can flush and close the file
     # once all the images have been written
@@ -94,7 +95,6 @@ def save_chunk(series, frame, messages):
         blocks[block].close()
         del blocks[block]
         del datasets[block]
-
 
 
 def process_headers(series, headers):
