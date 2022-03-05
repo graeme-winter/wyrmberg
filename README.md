@@ -36,8 +36,30 @@ dials.python ~/git/wyrmberg/loki.py TestInsulin/Insulin_3/Insulin_3_1
 
 here it is assumed that there will be `Insulin_3_1.nxs` and `Insulin_3_1_meta.h5` etc. available. These will be sent over the channel to the receiver. By default the rate will be no faster than the original acquisition rate, however if you export `NO_LOKI_WAIT=1` (or any non-null value) the time taken to send will be copied to the screen, which is an indication of the frame rate, provided a decent network connection. 
 
+You can also "monitor progress" by watching chunks appear in the HDF5 file with `idis` however this depends on a pre-existing NeXus file with virtual data sets being available.
+
+```
+dials.python ~/git/wyrmberg/isis.py /path/to/prefix.nxs
+```
+
+
 TODO:
  - add bandwidth logging
- - tidy / handle filenames somehow
- 
+
+
+Additional
+----------
+
+Per-frame information recorded from stream:
+- datatype - e.g. uint16
+- encoding - e.g. the encoding string from image packet
+- frame - 0...NN
+- frame_series - random number
+- frame_written - 0...NN
+- hash - has of frame chunk (N.B. this is wrong)
+- offset_written - 0...NN (seems to be there a lot)
+- real_time - exposure time, from image packet
+- size - size written
+- start_time - times from image packet
+- stop_time - likewise
 
