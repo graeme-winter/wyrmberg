@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import array
-import h5py
 import os
+import sys
 import time
+
+import h5py
 
 
 class h5_data_file:
@@ -100,8 +104,6 @@ def vds_info(root, master, dataset):
 
 
 if __name__ == "__main__":
-    import sys
-
     with h5py.File(sys.argv[1], "r", swmr=True) as f:
         d = f["/entry/data/data"]
         vds_info(os.path.split(sys.argv[1])[0], f, d)
