@@ -9,6 +9,17 @@ import h5py
 import numpy
 import zmq
 
+# FIXME add logging inc. progress for an external process...
+
+# FIXME turn this into a class
+
+# FIXME add a configuration system to this using configparser ->
+# the address of the source would go into a configuration, along with
+# frames per block etc.
+
+# FIXME I probably have enough information in the header packet to
+# make a master / nxs file with virtual data sets etc. (optional)
+
 MAX_FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
 
