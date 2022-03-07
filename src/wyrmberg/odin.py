@@ -8,6 +8,7 @@ from typing import Dict, Union
 import h5py
 import numpy
 import zmq
+import hdf5plugin
 
 # FIXME add logging inc. progress for an external process...
 
@@ -168,19 +169,16 @@ def process_image(series, image, frame):
     save_chunk(series, frame, image)
 
 
-def main():
+def capture(endpoint, prefix):
+    """Spin up a stream receiver to grab the data"""
+    print(f"Connecting to data source: {endpoint}")
+
     context = zmq.Context()
-
-    if len(sys.argv) != 3:
-        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999 /path/to/prefix")
-
-    print(f"Connecting to data source: {sys.argv[1]}")
-
     socket = context.socket(zmq.PULL)
-    socket.connect(sys.argv[1])
+    socket.connect(endpoint)
 
     global PREFIX
-    PREFIX = sys.argv[2]
+    PREFIX = prefix
 
     frames = 0
 
@@ -236,5 +234,12 @@ def main():
 
             break
 
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999 /path/to/prefix")
+
+    endpoint, prefix = sys.argv[1], sys.argv[2]
+
+    capture(endpoint, prefix)
 
 main()
