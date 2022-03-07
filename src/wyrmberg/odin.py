@@ -232,7 +232,7 @@ def capture(endpoint, prefix):
 
             meta.close()
 
-            break
+            return prefix
 
 def main():
     if len(sys.argv) != 3:
