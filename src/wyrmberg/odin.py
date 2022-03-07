@@ -177,7 +177,7 @@ def capture(endpoint, prefix):
     socket = context.socket(zmq.PULL)
     socket.connect(endpoint)
 
-    global PREFIX
+    global PREFIX, meta, meta_info
     PREFIX = prefix
 
     frames = 0
@@ -232,6 +232,9 @@ def capture(endpoint, prefix):
 
             meta.close()
 
+            meta = None
+            meta_info = { }
+
             return prefix
 
 def main():
@@ -242,4 +245,5 @@ def main():
 
     capture(endpoint, prefix)
 
-main()
+if __name__ == "__main__":
+    main()
