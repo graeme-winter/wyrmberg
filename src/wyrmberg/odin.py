@@ -233,9 +233,10 @@ def capture(endpoint, prefix):
             meta.close()
 
             meta = None
-            meta_info = { }
+            meta_info = {}
 
             return prefix
+
 
 def main():
     if len(sys.argv) != 3:
@@ -244,6 +245,7 @@ def main():
     endpoint, prefix = sys.argv[1], sys.argv[2]
 
     capture(endpoint, prefix)
+
 
 if __name__ == "__main__":
     main()
