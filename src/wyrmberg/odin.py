@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import time
+import os
 from typing import Dict, Union
 
 import h5py
@@ -172,6 +173,11 @@ def process_image(series, image, frame):
 def capture(endpoint, prefix):
     """Spin up a stream receiver to grab the data"""
     print(f"Connecting to data source: {endpoint}")
+    print(f"Capturing data to {prefix}")
+
+    directory = os.path.dirname(prefix)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     context = zmq.Context()
     socket = context.socket(zmq.PULL)
