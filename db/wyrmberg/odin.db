@@ -1,0 +1,11 @@
+record(ai, "odin:frameswritten")
+{
+    field(DESC, "Number of frames written")
+}
+record(waveform, "odin:directory_prefix")
+{
+    field(DTYP, "Soft Channel")
+    field(DESC, "Directory")
+    field(NELM, "256")
+    field(FTVL, "CHAR")
+}

@@ -1,11 +1,26 @@
+from __future__ import annotations
+
 import json
-import zmq
-import time
 import sys
+import time
 import os
+from typing import Dict, Union
+
 import h5py
 import numpy
+import zmq
 import hdf5plugin
+
+# FIXME add logging inc. progress for an external process...
+
+# FIXME turn this into a class
+
+# FIXME add a configuration system to this using configparser ->
+# the address of the source would go into a configuration, along with
+# frames per block etc.
+
+# FIXME I probably have enough information in the header packet to
+# make a master / nxs file with virtual data sets etc. (optional)
 
 MAX_FRAMES_PER_BLOCK = 1000
 COMPRESSION = {"compression": 32008, "compression_opts": (0, 2)}
@@ -17,21 +32,7 @@ frames_per_block = {}
 datasets = {}
 meta = None
 
-# Per-frame information recorded from stream
-#
-# datatype - e.g. uint16
-# encoding - e.g. the encoding string from image packet
-# frame - 0...NN
-# frame_series - random number
-# frame_written - 0...NN
-# hash - has of frame chunk (N.B. this is wrong)
-# offset_written - 0...NN (seems to be there a lot)
-# real_time - exposure time, from image packet
-# size - size written
-# start_time - times from image packet
-# stop_time - likewise
-
-meta_info = {}
+meta_info = {}  # type: Dict[str, Dict[int, Union[float,int,str]]]
 
 
 def save_chunk(series, frame, messages):
@@ -60,7 +61,7 @@ def save_chunk(series, frame, messages):
 
     # now save the actual data...
 
-    if not block in blocks:
+    if block not in blocks:
 
         dtype = getattr(numpy, part2["type"])
         NY, NX = tuple(part2["shape"])
@@ -169,19 +170,21 @@ def process_image(series, image, frame):
     save_chunk(series, frame, image)
 
 
-def main():
+def capture(endpoint, prefix):
+    """Spin up a stream receiver to grab the data"""
+    print(f"Connecting to data source: {endpoint}")
+    print(f"Capturing data to {prefix}")
+
+    directory = os.path.dirname(prefix)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     context = zmq.Context()
-
-    if len(sys.argv) != 3:
-        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999 /path/to/prefix")
-
-    print(f"Connecting to data source: {sys.argv[1]}")
-
     socket = context.socket(zmq.PULL)
-    socket.connect(sys.argv[1])
+    socket.connect(endpoint)
 
-    global PREFIX
-    PREFIX = sys.argv[2]
+    global PREFIX, meta, meta_info
+    PREFIX = prefix
 
     frames = 0
 
@@ -235,7 +238,20 @@ def main():
 
             meta.close()
 
-            break
+            meta = None
+            meta_info = {}
+
+            return prefix
 
 
-main()
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(f"{sys.argv[0]} tcp://i03-eiger01.diamond.ac.uk:9999 /path/to/prefix")
+
+    endpoint, prefix = sys.argv[1], sys.argv[2]
+
+    capture(endpoint, prefix)
+
+
+if __name__ == "__main__":
+    main()
