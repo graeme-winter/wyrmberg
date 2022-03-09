@@ -81,7 +81,7 @@ def save_chunk(series, frame, messages):
         )
         blocks[block].swmr_mode = True
         t1 = time.time()
-        print(f"{now()} CREATE {block+1:06d}.h5 took {t1 - t0:.3f}")
+        print(f"{now()} CREATE {block+1:06d}.h5 took {t1 - t0:.6f}")
         frames_per_block[block] = 0
 
     chunk = messages[2]
@@ -96,7 +96,7 @@ def save_chunk(series, frame, messages):
     blocks[block].flush()
     t1 = time.time()
     nbytes = part2["size"]
-    print(f"{now()} WRITE {offset[0]} {block+1} {nbytes} took {t1 - t0:.3f}")
+    print(f"{now()} WRITE {offset[0]} {block+1} {nbytes} took {t1 - t0:.6f}")
 
     # should probably have a check in here too that we can flush and close the file
     # once all the images have been written
@@ -107,7 +107,7 @@ def save_chunk(series, frame, messages):
         t0 = time.time()
         blocks[block].close()
         t1 = time.time()
-        print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.3f}")
+        print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.6f}")
         del blocks[block]
         del datasets[block]
 
@@ -223,7 +223,7 @@ def capture(endpoint, prefix):
                 t0 = time.time()
                 blocks[block].close()
                 t1 = time.time()
-                print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.3f}")
+                print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.6f}")
                 del blocks[block]
                 del datasets[block]
 
