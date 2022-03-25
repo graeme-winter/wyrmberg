@@ -59,7 +59,10 @@ def watcher(h5_data_files):
                     h5.finished = False
                 else:
                     h5.chunk_sizes[j] = s.size
-                    print(h5.filename, j, h5.offset + j, s.size, time.time())
+                    _, chunk = h5.dset.id.read_direct_chunk((j, 0, 0))
+                    print(
+                        h5.filename, j, h5.offset + j, s.size, len(chunk), time.time()
+                    )
 
             if h5.finished:
                 h5.dset = None
