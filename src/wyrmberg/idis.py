@@ -7,6 +7,8 @@ import time
 
 import h5py
 
+from . import now
+
 
 class h5_data_file:
     def __init__(self, filename, dsetname, frames, offset):
@@ -59,10 +61,10 @@ def watcher(h5_data_files):
                     h5.finished = False
                 else:
                     h5.chunk_sizes[j] = s.size
+                    t0 = time.time()
                     _, chunk = h5.dset.id.read_direct_chunk((j, 0, 0))
-                    print(
-                        h5.filename, j, h5.offset + j, s.size, len(chunk), time.time()
-                    )
+                    t1 = time.time()
+                    print(f"READ {h5.offset + j} {len(chunk)} {t1 - t0:.6f} {now}")
 
             if h5.finished:
                 h5.dset = None

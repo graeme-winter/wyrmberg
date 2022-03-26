@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import json
 import os
 import sys
@@ -11,6 +10,8 @@ import h5py
 import hdf5plugin  # noqa: F401
 import numpy
 import zmq
+
+from . import now
 
 # FIXME add logging inc. progress for an external process...
 
@@ -34,9 +35,6 @@ datasets = {}
 meta = None
 
 meta_info = {}  # type: Dict[str, Dict[int, Union[float,int,str]]]
-
-
-now = datetime.datetime.now
 
 
 def save_chunk(series, frame, messages):
@@ -81,7 +79,7 @@ def save_chunk(series, frame, messages):
         )
         blocks[block].swmr_mode = True
         t1 = time.time()
-        print(f"{now()} CREATE {block+1:06d}.h5 took {t1 - t0:.6f}")
+        print(f"CREATE {block+1:06d} {t1 - t0:.6f} {now()}")
         frames_per_block[block] = 0
 
     chunk = messages[2]
@@ -96,7 +94,7 @@ def save_chunk(series, frame, messages):
     blocks[block].flush()
     t1 = time.time()
     nbytes = part2["size"]
-    print(f"{now()} WRITE {offset[0]} {block+1} {nbytes} took {t1 - t0:.6f}")
+    print(f"WRITE {block * 1000 + offset[0]} {nbytes} {t1 - t0:.6f} {now()}")
 
     # should probably have a check in here too that we can flush and close the file
     # once all the images have been written
@@ -107,7 +105,7 @@ def save_chunk(series, frame, messages):
         t0 = time.time()
         blocks[block].close()
         t1 = time.time()
-        print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.6f}")
+        print(f"CLOSE {block+1:06d} {t1 - t0:.6f} {now()}")
         del blocks[block]
         del datasets[block]
 
@@ -217,13 +215,15 @@ def capture(endpoint, prefix):
             process_image(series, messages, m0["frame"])
             frames += 1
         elif htype.startswith("dseries"):
-            print(f"Acquisition time: {time.time() - t0:.2f}s for {frames} images")
+            t1 = time.time()
+            print(f"Total acquisition time: {t1 - t0:.2f} / {frames}")
 
+            # close any remaining blocks
             for block in list(blocks):
                 t0 = time.time()
                 blocks[block].close()
                 t1 = time.time()
-                print(f"{now()} CLOSE {block+1:06d} took {t1 - t0:.6f}")
+                print(f"CLOSE {block+1:06d} {t1 - t0:.6f} {now()}")
                 del blocks[block]
                 del datasets[block]
 
