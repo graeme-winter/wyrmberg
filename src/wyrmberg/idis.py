@@ -63,7 +63,7 @@ def watcher(h5_data_files):
                     t0 = time.time()
                     _, chunk = h5.dset.id.read_direct_chunk((j, 0, 0))
                     t1 = time.time()
-                    print(f"READ {h5.offset + j} {len(chunk)} {t1 - t0:.6f} {now}")
+                    print(f"READ {h5.offset + j} {len(chunk)} {t1 - t0:.6f} {now()}")
 
             if h5.finished:
                 h5.dset = None
