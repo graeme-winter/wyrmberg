@@ -10,8 +10,7 @@ import h5py
 import hdf5plugin  # noqa: F401
 import numpy
 import zmq
-
-from . import now
+from util import now
 
 # FIXME add logging inc. progress for an external process...
 

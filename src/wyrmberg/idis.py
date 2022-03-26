@@ -6,8 +6,7 @@ import sys
 import time
 
 import h5py
-
-from . import now
+from util import now
 
 
 class h5_data_file:
