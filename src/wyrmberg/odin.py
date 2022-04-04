@@ -191,7 +191,7 @@ def capture(endpoint, prefix):
         os.makedirs(directory)
 
     context = zmq.Context()
-    context.setsockopt(zmq.RCVHWM, 10000)
+    context.setsockopt(zmq.RCVHWM, 1000000)
     socket = context.socket(zmq.PULL)
     socket.connect(endpoint)
 
