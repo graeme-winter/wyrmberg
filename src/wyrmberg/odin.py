@@ -68,7 +68,9 @@ def save_chunk(series, frame, messages):
         NY, NX = tuple(part2["shape"])
 
         t0 = time.time()
-        blocks[block] = h5py.File(f"{PREFIX}_{block+1:06d}.h5", "w", libver="latest")
+        blocks[block] = h5py.File(
+            f"{PREFIX}_{block+1:06d}.h5-tmp", "w", libver="latest"
+        )
         datasets[block] = blocks[block].create_dataset(
             "data",
             shape=(MAX_FRAMES_PER_BLOCK, NY, NX),
@@ -103,6 +105,8 @@ def save_chunk(series, frame, messages):
     if frames_per_block[block] == MAX_FRAMES_PER_BLOCK:
         t0 = time.time()
         blocks[block].close()
+        # relink file to expected filename
+        os.rename(f"{PREFIX}_{block+1:06d}.h5-tmp", f"{PREFIX}_{block+1:06d}.h5")
         t1 = time.time()
         print(f"CLOSE {block+1:06d} {t1 - t0:.6f} {now()}")
         del blocks[block]
@@ -222,6 +226,10 @@ def capture(endpoint, prefix):
             for block in list(blocks):
                 t0 = time.time()
                 blocks[block].close()
+                # relink file to expected filename
+                os.rename(
+                    f"{PREFIX}_{block+1:06d}.h5-tmp", f"{PREFIX}_{block+1:06d}.h5"
+                )
                 t1 = time.time()
                 print(f"CLOSE {block+1:06d} {t1 - t0:.6f} {now()}")
                 del blocks[block]
